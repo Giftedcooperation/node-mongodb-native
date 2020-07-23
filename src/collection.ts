@@ -1,4 +1,4 @@
-import { emitDeprecatedOptionWarning } from './utils';
+import { emitDeprecatedOptionWarning, toError } from './utils';
 import PromiseProvider = require('./promise_provider');
 import ReadPreference = require('./read_preference');
 import { deprecate } from 'util';
@@ -20,7 +20,7 @@ import { MongoError } from './error';
 import unordered = require('./bulk/unordered');
 import ordered = require('./bulk/ordered');
 import ChangeStream = require('./change_stream');
-import WriteConcern = require('./write_concern');
+import { WriteConcern } from './write_concern';
 import ReadConcern = require('./read_concern');
 import { AggregationCursor, CommandCursor } from './cursor';
 import { removeDocuments, updateDocuments, insertDocuments } from './operations/common_functions';
@@ -1455,7 +1455,7 @@ Collection.prototype.find = deprecateOptions(
     deprecatedOptions: DEPRECATED_FIND_OPTIONS,
     optionsIndex: 1
   },
-  function(this: any, query: any, options: any) {
+  function (this: any, query: any, options: any) {
     if (arguments.length > 2) {
       throw new TypeError('Third parameter to `collection.find()` must be undefined');
     }
@@ -1670,7 +1670,7 @@ Collection.prototype.find = deprecateOptions(
  * @returns {Promise<void>} returns Promise if no callback passed
  * @deprecated Use insertOne, insertMany or bulkWrite
  */
-Collection.prototype.insert = deprecate(function(
+Collection.prototype.insert = deprecate(function (
   this: any,
   docs: any,
   options: any,
@@ -1710,7 +1710,7 @@ Collection.prototype.insert = deprecate(function(
  * @returns {Promise<void>} returns Promise if no callback passed
  * @deprecated use updateOne, updateMany or bulkWrite
  */
-Collection.prototype.update = deprecate(function(
+Collection.prototype.update = deprecate(function (
   this: any,
   selector: any,
   update: any,
@@ -1755,7 +1755,7 @@ Collection.prototype.removeMany = Collection.prototype.deleteMany;
  * @returns {Promise<void>} returns Promise if no callback passed
  * @deprecated use deleteOne, deleteMany or bulkWrite
  */
-Collection.prototype.remove = deprecate(function(
+Collection.prototype.remove = deprecate(function (
   this: any,
   selector: any,
   options: any,
@@ -1794,7 +1794,7 @@ Collection.prototype.remove = deprecate(function(
  * @returns {Promise<void>} returns Promise if no callback passed
  * @deprecated use insertOne, insertMany, updateOne or updateMany
  */
-Collection.prototype.save = deprecate(function(
+Collection.prototype.save = deprecate(function (
   this: any,
   doc: any,
   options: any,
@@ -1870,7 +1870,7 @@ Collection.prototype.findOne = deprecateOptions(
     deprecatedOptions: DEPRECATED_FIND_OPTIONS,
     optionsIndex: 1
   },
-  function(this: any, query: any, options: any, callback: Function) {
+  function (this: any, query: any, options: any, callback: Function) {
     if (callback !== undefined && typeof callback !== 'function') {
       throw new TypeError('Third parameter to `findOne()` must be a callback or undefined');
     }
@@ -1921,7 +1921,7 @@ Collection.prototype.dropAllIndexes = deprecate(
  * @param {Collection~resultCallback} [callback] The command result callback
  * @returns {Promise<void>} returns Promise if no callback passed
  */
-Collection.prototype.ensureIndex = deprecate(function(
+Collection.prototype.ensureIndex = deprecate(function (
   this: any,
   fieldOrSpec: any,
   options: any,
@@ -1967,7 +1967,7 @@ Collection.prototype.ensureIndex = deprecate(function(
  * @returns {Promise<void>} returns Promise if no callback passed
  * @deprecated use {@link Collection#countDocuments countDocuments} or {@link Collection#estimatedDocumentCount estimatedDocumentCount} instead
  */
-Collection.prototype.count = deprecate(function(
+Collection.prototype.count = deprecate(function (
   this: any,
   query: any,
   options: any,
@@ -2059,7 +2059,7 @@ function _findAndModify(
  * @returns {Promise<void>} returns Promise if no callback passed
  * @deprecated use findOneAndDelete instead
  */
-Collection.prototype.findAndRemove = deprecate(function(
+Collection.prototype.findAndRemove = deprecate(function (
   this: any,
   query: any,
   sort: any,
@@ -2099,7 +2099,7 @@ Collection.prototype.findAndRemove = deprecate(function(
  * @returns {Promise<void>} returns Promise if no callback passed
  * @deprecated MongoDB 3.6 or higher no longer supports the group command. We recommend rewriting using the aggregation framework.
  */
-Collection.prototype.group = deprecate(function(
+Collection.prototype.group = deprecate(function (
   this: any,
   keys: any,
   condition: any,
@@ -2158,6 +2158,24 @@ Collection.prototype.group = deprecate(function(
   );
 },
 'MongoDB 3.6 or higher no longer supports the group command. We recommend rewriting using the aggregation framework.');
+
+// Check the update operation to ensure it has atomic operators.
+function checkForAtomicOperators(update: any): any {
+  if (Array.isArray(update)) {
+    return update.reduce((err?: any, u?: any) => err || checkForAtomicOperators(u), null);
+  }
+
+  const keys = Object.keys(update);
+
+  // same errors as the server would give for update doc lacking atomic operators
+  if (keys.length === 0) {
+    return toError('The update operation document must contain at least one atomic operator.');
+  }
+
+  if (keys[0][0] !== '$') {
+    return toError('the update operation document must contain atomic operators.');
+  }
+}
 
 /**
  * Save a document.
