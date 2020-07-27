@@ -1,6 +1,6 @@
 import { emitDeprecatedOptionWarning, toError } from './utils';
 import PromiseProvider = require('./promise_provider');
-import ReadPreference = require('./read_preference');
+import { ReadPreference } from './read_preference';
 import { deprecate } from 'util';
 import {
   normalizeHintField,
@@ -2158,24 +2158,6 @@ Collection.prototype.group = deprecate(function (
   );
 },
 'MongoDB 3.6 or higher no longer supports the group command. We recommend rewriting using the aggregation framework.');
-
-// Check the update operation to ensure it has atomic operators.
-function checkForAtomicOperators(update: any): any {
-  if (Array.isArray(update)) {
-    return update.reduce((err?: any, u?: any) => err || checkForAtomicOperators(u), null);
-  }
-
-  const keys = Object.keys(update);
-
-  // same errors as the server would give for update doc lacking atomic operators
-  if (keys.length === 0) {
-    return toError('The update operation document must contain at least one atomic operator.');
-  }
-
-  if (keys[0][0] !== '$') {
-    return toError('the update operation document must contain atomic operators.');
-  }
-}
 
 /**
  * Save a document.

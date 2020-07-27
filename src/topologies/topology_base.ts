@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { MongoError } from '../error';
 import { format as f } from 'util';
-import ReadPreference = require('../read_preference');
+import { ReadPreference } from '../read_preference';
 import { ClientSession } from '../sessions';
 
 // The store of ops

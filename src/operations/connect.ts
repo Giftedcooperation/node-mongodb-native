@@ -1,6 +1,6 @@
 import fs = require('fs');
 import Logger = require('../logger');
-import ReadPreference = require('../read_preference');
+import { ReadPreference } from '../read_preference';
 import { MongoError } from '../error';
 import NativeTopology = require('../topologies/native_topology');
 import { parseConnectionString } from '../connection_string';
