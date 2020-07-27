@@ -2,7 +2,7 @@
 var test = require('./shared').assert;
 var setupDatabase = require('./shared').setupDatabase;
 const expect = require('chai').expect;
-const { Db, DBRef } = require('../../src');
+const { Db } = require('../../src');
 
 describe('Db', function () {
   before(function () {

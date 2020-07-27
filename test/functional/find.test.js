@@ -627,7 +627,10 @@ describe('Find', function () {
       client.connect(function (err, client) {
         var db = client.db(configuration.db);
         db.createCollection('test_find_by_oid', function (err, collection) {
-          collection.insertOne({ hello: 'mike' }, configuration.writeConcernMax(), function (err, r) {
+          collection.insertOne({ hello: 'mike' }, configuration.writeConcernMax(), function (
+            err,
+            r
+          ) {
             var docs = r.ops[0];
             test.ok(
               docs._id instanceof ObjectId ||

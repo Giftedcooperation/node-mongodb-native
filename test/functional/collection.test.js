@@ -4,7 +4,6 @@ const chai = require('chai');
 const expect = chai.expect;
 const sinonChai = require('sinon-chai');
 const mock = require('mongodb-mock-server');
-const { Long, ObjectId } = require('../../src');
 chai.use(sinonChai);
 
 describe('Collection', function () {
